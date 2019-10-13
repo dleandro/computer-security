@@ -8,10 +8,10 @@ import java.security.*;
 
 public class Exercise_7 {
 
-    private static final String path="C:\\Users\\joaob\\Desktop\\ISEL\\QUINTO SEMESTRE\\SI\\Testes\\Encriptar.txt";
+    //C:\\Users\\joaob\\Desktop\\ISEL\\QUINTO SEMESTRE\\SI\\Testes\\Encriptar.txt
+    private static final String path="E:\\Users\\Diogo\\Desktop\\isel\\SI\\computer-security\\Encriptar.txt";
     private static byte[] mensagem;
-    public static void main(String[] args) throws NoSuchAlgorithmException, IOException, NoSuchPaddingException,
-            InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
+    public static void main(String[] args) throws NoSuchAlgorithmException, IOException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
         KeyGenerator generator=KeyGenerator.getInstance("AES");
         SecretKey key=generator.generateKey();
         mensagem=readfile(path);
@@ -40,9 +40,7 @@ public class Exercise_7 {
 
     }
 
-    private static byte[] decryptmessage(Cipher cipher, String mode, byte[] message,SecretKey key,int paramslength)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException,
-            IllegalBlockSizeException, InvalidAlgorithmParameterException {
+    private static byte[] decryptmessage(Cipher cipher, String mode, byte[] message,SecretKey key,int paramslength) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
         cipher=Cipher.getInstance(mode);
         if (paramslength!=0) {
             cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(new byte[paramslength]));
@@ -54,9 +52,7 @@ public class Exercise_7 {
         return decrypted;
     }
 
-    private static byte[] encryptmessage(Cipher cipher,String mode,byte[] message,SecretKey key,int paramslength)
-            throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException,
-            InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    private static byte[] encryptmessage(Cipher cipher,String mode,byte[] message,SecretKey key,int paramslength) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         cipher=Cipher.getInstance(mode);
 
         if (paramslength!=0) {

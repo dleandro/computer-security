@@ -40,7 +40,7 @@ public class Exercise_9{
         return (X509Certificate) cer;
     }
 
-    private static void execute(String filename, Operation operation, Context ctx){
+    private static void execute(String filename,Operation operation,Context ctx){
             try {
                 if (operation == Operation.ENCRYPT) {
                     encrypt(filename, operation, ctx);
