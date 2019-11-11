@@ -1,0 +1,1 @@
+Teste de encriptação de um ficheiro de texto

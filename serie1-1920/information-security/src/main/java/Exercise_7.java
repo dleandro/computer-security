@@ -12,12 +12,12 @@ public class Exercise_7 {
     private static byte[] mensagem;
     public static void main(String[] args) throws NoSuchAlgorithmException, IOException, NoSuchPaddingException,
             InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException {
-        KeyGenerator generator=KeyGenerator.getInstance("AES");
-        SecretKey key=generator.generateKey();
-        mensagem=readfile(path);
+        KeyGenerator generator = KeyGenerator.getInstance("AES");
+        SecretKey key = generator.generateKey();
+        mensagem = readfile(path);
 
 
-        Cipher cipher=Cipher.getInstance("AES");
+        Cipher cipher = Cipher.getInstance("AES");
 
         byte[] encriptedWithECB=encryptmessage(cipher,"AES/ECB/PKCS5Padding",mensagem,key,0);
         System.out.println(new String(encriptedWithECB));
@@ -32,11 +32,6 @@ public class Exercise_7 {
         System.out.println(new String(decryptmessage(cipher,"AES/CBC/PKCS5Padding",encriptedWithCBC,key,16)));
         System.out.println(new String(decryptmessage(cipher,"AES/CFB/PKCS5Padding",encriptedWithCFB,key,16)));
         System.out.println(new String(decryptmessage(cipher,"AES/OFB/PKCS5Padding",encriptedWithOFB,key,16)));
-
-
-
-
-
 
     }
 
