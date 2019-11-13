@@ -1,3 +1,4 @@
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 public class Context {
@@ -5,15 +6,13 @@ public class Context {
   private X509Certificate certificate;
 
 
-    public Context(){
-
-    }
+    public Context(){    }
 
     public X509Certificate getCertificate() {
         return certificate;
     }
 
     public void setcertificate(X509Certificate cer) {
-        this.certificate = cer;
+        this.certificate=cer;
     }
 }
