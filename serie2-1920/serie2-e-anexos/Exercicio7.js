@@ -4,12 +4,13 @@ const app = express()
 const PORT=8082;
 const request=require('request')
 const url = require('url')
+const flatMap = require('array.prototype.flatmap')
 
 const 
 GOOGLE_CLIENT_ID='24443093752-l4m9is96jp05qkq1r602tapfb5jq577n.apps.googleusercontent.com',
 GITHUB_CLIENT_ID = '8c58a9745405de014b66',
 GITHUB_CLIENT_SECRET = '57abb1941df3de65119a86df620288f69db2e921',
-GITHUB_USER_EMAIL = 'A44868@alunos.isel.pt'
+userToAuthenticate = 'dleandro'
 
 
 app.get('/login', (req, resp) => {
@@ -24,7 +25,7 @@ app.get('/login', (req, resp) => {
       + `scope=openid%20email&`
       
       // parameter state should bind the user's session to a request/response
-      + `state=${GITHUB_USER_EMAIL}&`
+      + `state=${userToAuthenticate}&`
       
       // response_type for "authorization code grant"
       + 'response_type=code&'
@@ -45,6 +46,8 @@ app.get('/login', (req, resp) => {
          pathname: 'login/oauth/authorize', 
          query: { 
             client_id: GITHUB_CLIENT_ID, 
+            login: req.query.state,
+            scope: 'repo'
          } 
       }))
    })
@@ -63,40 +66,57 @@ app.get('/login', (req, resp) => {
             
          }
       }, (err, resp, body) => {
-         listIssues(body, res)
+         listUserRepos(body, res)
       })
    })
-
-   app.get('user/task', (req, res) => {
-
+   
+   app.get('/user/task', (req, res) => {
+      
       request.post({
          url: `https://www.googleapis.com/tasks/v1/users/${GITHUB_USER_EMAIL}/lists`,
          form: {
-               "kind": "tasks#taskList",
-               "id": string,
-               "etag": string,
-               "title": string,
-               "updated": datetime,
-               "selfLink": string
+            "kind": "tasks#taskList",
+            "id": string,
+            "etag": string,
+            "title": string,
+            "updated": datetime,
+            "selfLink": string
          }
       }, (err, resp, body) => {
-
-
+         
+         
       })
-
-
-
+      
+      
+      
    })
    
-   function listIssues(token, res) {
+   app.get('/issues/user/:repo', (req, res) => {
       request.get({
          headers: {
             'user-agent': 'node.js',
+            'Content-Type': 'application/json'
+         },
+         url: `https://api.github.com/repos/${userToAuthenticate}/${req.param('repo')}/issues`
+      }, (err, resp, body) => {
+         res.send(JSON.stringify(body))
+      })
+   })
+   
+   function listUserRepos(token, res) {
+      request.get({
+         headers: {
+            'user-agent': 'node.js',
+            'Content-Type': 'application/json',
             Authorization: `token ${token.split('&')[0].split('=')[1]}`
          },
-         url: 'https://api.github.com/repos/dleandro/si2/issues'
+         url: 'https://api.github.com/user/repos'
       }, (err, resp, body) => {
-         res.end(body.toString() )
+    
+         let repos = flatMap(JSON.parse(body), e => '<a href=' + 'http://localhost:8082/issues/user/' + e.name + `> ${e.name}</a><br>`)
+         res.setHeader('content-type', 'text/html');
+         res.send(repos)
+         
       })
       
    }

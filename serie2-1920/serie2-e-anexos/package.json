@@ -9,9 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "array.prototype.flatmap": "^1.2.2",
+    "cheerio": "^1.0.0-rc.3",
     "express": "^4.17.1",
     "fs": "0.0.1-security",
     "https": "^1.0.0",
+    "node-html-parser": "^1.1.16",
     "path": "^0.12.7",
     "request": "^2.88.0"
   }
