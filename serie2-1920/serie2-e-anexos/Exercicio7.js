@@ -94,30 +94,45 @@ app.get('/login', (req, resp) => {
       request.get({
          headers: {
             'user-agent': 'node.js',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            Authorization: `token ${req.query.token}`
          },
+         
          milestone: '*',
          assignee: '*',
-
+         
          state: 'all',
          filter: 'all',
          url: `https://api.github.com/repos/${userToAuthenticate}/${req.param('repo')}/issues`
       }, (err, resp, body) => {
-         res.send(JSON.stringify(body))
+         let jsonObj = JSON.parse(body)
+         res.setHeader('content-type', 'text/plain')
+         
+         if (jsonObj.message == undefined) {
+            jsonObj.forEach(element => res.write("Title: " + element.title + ', Body: ' + element.body + ', creator: ' +element.user.login + '\n'))
+            
+            res.end()
+         } else
+         
+         res.send("not found")
+         
       })
    })
    
    function listUserRepos(token, res) {
+      
+      const access_token = token.split('&')[0].split('=')[1]
+      
       request.get({
          headers: {
             'user-agent': 'node.js',
             'Content-Type': 'application/json',
-            Authorization: `token ${token.split('&')[0].split('=')[1]}`
+            Authorization: `token ${access_token}`
          },
          url: 'https://api.github.com/user/repos'
       }, (err, resp, body) => {
-    
-         let repos = flatMap(JSON.parse(body), e => '<a href=' + 'http://localhost:8082/issues/user/' + e.name + `> ${e.name}</a><br>`)
+         
+         let repos = flatMap(JSON.parse(body), e => '<a href=' + 'http://localhost:8082/issues/user/' + e.name + '?token=' + access_token + `> ${e.name}</a><br>`)
          res.setHeader('content-type', 'text/html');
          res.send(repos)
          
