@@ -6,11 +6,13 @@ const request=require('request')
 const url = require('url')
 const flatMap = require('array.prototype.flatmap')
 
+let issues=""
 const 
 GOOGLE_CLIENT_ID='24443093752-l4m9is96jp05qkq1r602tapfb5jq577n.apps.googleusercontent.com',
 GITHUB_CLIENT_ID = '8c58a9745405de014b66',
 GITHUB_CLIENT_SECRET = '57abb1941df3de65119a86df620288f69db2e921',
 userToAuthenticate = 'A44857'
+let form=`<form action="/task/manager">Issues title:<br><input type="text" name="firstname" value=""></form>`
 
 
 app.get('/login', (req, resp) => {
@@ -105,12 +107,14 @@ app.get('/login', (req, resp) => {
          filter: 'all',
          url: `https://api.github.com/repos/${userToAuthenticate}/${req.param('repo')}/issues`
       }, (err, resp, body) => {
+         issues = body
          let jsonObj = JSON.parse(body)
-         res.setHeader('content-type', 'text/plain')
+         res.setHeader('content-type', 'text/html')
          
          if (jsonObj.message == undefined) {
             jsonObj.forEach(element => res.write("Title: " + element.title + ', Body: ' + element.body + ', creator: ' +element.user.login + '\n'))
             
+            res.write(form)
             res.end()
          } else
          
@@ -118,6 +122,8 @@ app.get('/login', (req, resp) => {
          
       })
    })
+
+   app.get('task/manager',)
    
    function listUserRepos(token, res) {
       
