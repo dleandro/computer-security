@@ -10,7 +10,7 @@ const
 GOOGLE_CLIENT_ID='24443093752-l4m9is96jp05qkq1r602tapfb5jq577n.apps.googleusercontent.com',
 GITHUB_CLIENT_ID = '8c58a9745405de014b66',
 GITHUB_CLIENT_SECRET = '57abb1941df3de65119a86df620288f69db2e921',
-userToAuthenticate = 'dleandro'
+userToAuthenticate = 'A44857'
 
 
 app.get('/login', (req, resp) => {
@@ -63,7 +63,6 @@ app.get('/login', (req, resp) => {
             client_id: GITHUB_CLIENT_ID,
             client_secret: GITHUB_CLIENT_SECRET,
             code: req.query.code
-            
          }
       }, (err, resp, body) => {
          listUserRepos(body, res)
@@ -97,6 +96,11 @@ app.get('/login', (req, resp) => {
             'user-agent': 'node.js',
             'Content-Type': 'application/json'
          },
+         milestone: '*',
+         assignee: '*',
+
+         state: 'all',
+         filter: 'all',
          url: `https://api.github.com/repos/${userToAuthenticate}/${req.param('repo')}/issues`
       }, (err, resp, body) => {
          res.send(JSON.stringify(body))
