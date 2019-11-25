@@ -1,19 +1,20 @@
-const express=require('express')
+"use strict"
 
+const express=require('express')
 const app = express()
 const PORT=8082;
 const request=require('request')
 const url = require('url')
 const flatMap = require('array.prototype.flatmap')
+let issuesArr=[]
 
-let issues=""
 const 
 GOOGLE_CLIENT_ID='24443093752-l4m9is96jp05qkq1r602tapfb5jq577n.apps.googleusercontent.com',
 GITHUB_CLIENT_ID = '8c58a9745405de014b66',
 GITHUB_CLIENT_SECRET = '57abb1941df3de65119a86df620288f69db2e921',
 userToAuthenticate = 'A44857'
-let form=`<form action="/task/manager">Issues title:<br><input type="text" name="firstname" value=""></form>`
-
+let form=`<html><body><form action="/tasks" method="get">Issues title:<br><input type="text" name="nome" value=""><input type="submit"></form></body></html>`
+let token=""
 
 app.get('/login', (req, resp) => {
    resp.redirect(302,
@@ -93,11 +94,12 @@ app.get('/login', (req, resp) => {
    })
    
    app.get('/issues/user/:repo', (req, res) => {
+      token=req.query.token
       request.get({
          headers: {
             'user-agent': 'node.js',
             'Content-Type': 'application/json',
-            Authorization: `token ${req.query.token}`
+            Authorization: `token ${token}`
          },
          
          milestone: '*',
@@ -107,14 +109,17 @@ app.get('/login', (req, resp) => {
          filter: 'all',
          url: `https://api.github.com/repos/${userToAuthenticate}/${req.param('repo')}/issues`
       }, (err, resp, body) => {
-         issues = body
+         //issues = body
          let jsonObj = JSON.parse(body)
          res.setHeader('content-type', 'text/html')
-         
          if (jsonObj.message == undefined) {
-            jsonObj.forEach(element => res.write("Title: " + element.title + ', Body: ' + element.body + ', creator: ' +element.user.login + '\n'))
-            
-            res.write(form)
+            jsonObj.forEach(element =>{ res.write("<p>Title: " + element.title + ', Body: ' + element.body + ', creator: ' +element.user.login + "<\p>")
+            issuesArr[element.title]={
+               body:element.body,
+               author:element.user.login
+            }
+         })
+               res.write(form)
             res.end()
          } else
          
@@ -123,7 +128,31 @@ app.get('/login', (req, resp) => {
       })
    })
 
-   app.get('task/manager',)
+   app.get('/tasks',(req,res)=>{
+      let issue=issuesArr[req.query.nome]
+      console.log(req.query.nome)
+      console.log(issue.body)
+      console.log(issue.author)
+      request.get( {
+         url:`https://www.googleapis.com/tasks/v1/users/${userToAuthenticate}/lists/myList`,
+         Authorization:token
+   },(err,response,body)=>{
+         console.log('pipip parou')
+         if(body=='Not Found'){
+            request.post({
+               url:`https://www.googleapis.com/tasks/v1/users/${userToAuthenticate}/lists/myList`,
+               Authorization:token
+         },(err,response,body)=>{
+               console.log('pipi parou2x')
+            })
+         }
+      })
+
+   })
+
+   app.post('/tasks',(req,res)=>{
+      console.log("teste")
+   })
    
    function listUserRepos(token, res) {
       
