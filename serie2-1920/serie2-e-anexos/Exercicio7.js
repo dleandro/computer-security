@@ -10,11 +10,12 @@ let issuesArr=[]
 
 const 
 GOOGLE_CLIENT_ID='24443093752-l4m9is96jp05qkq1r602tapfb5jq577n.apps.googleusercontent.com',
+GOOGLE_CLIENT_SECRET = '2LCS4rLIWGQTdtwCYbSmTfLi',
 GITHUB_CLIENT_ID = '8c58a9745405de014b66',
 GITHUB_CLIENT_SECRET = '57abb1941df3de65119a86df620288f69db2e921',
 userToAuthenticate = 'A44857'
 let form=`<html><body><form action="/tasks" method="get">Issues title:<br><input type="text" name="nome" value=""><input type="submit"></form></body></html>`
-let token=""
+let googleCode = ""
 
 app.get('/login', (req, resp) => {
    resp.redirect(302,
@@ -25,7 +26,7 @@ app.get('/login', (req, resp) => {
       + 'client_id='+ GOOGLE_CLIENT_ID +'&'
       
       // scope "openid email"
-      + `scope=openid%20email&`
+      + `scope=openid%20email%20https://www.googleapis.com/auth/tasks&`
       
       // parameter state should bind the user's session to a request/response
       + `state=${userToAuthenticate}&`
@@ -42,6 +43,7 @@ app.get('/login', (req, resp) => {
    })
    
    app.get('/user/login', (req, res) => {
+      googleCode = req.query.code
       
       res.redirect(302, url.format({
          protocol: 'https', 
@@ -72,34 +74,16 @@ app.get('/login', (req, resp) => {
       })
    })
    
-   app.get('/user/task', (req, res) => {
-      
-      request.post({
-         url: `https://www.googleapis.com/tasks/v1/users/${GITHUB_USER_EMAIL}/lists`,
-         form: {
-            "kind": "tasks#taskList",
-            "id": string,
-            "etag": string,
-            "title": string,
-            "updated": datetime,
-            "selfLink": string
-         }
-      }, (err, resp, body) => {
-         
-         
-      })
+
       
       
-      
-   })
    
    app.get('/issues/user/:repo', (req, res) => {
-      token=req.query.token
       request.get({
          headers: {
             'user-agent': 'node.js',
             'Content-Type': 'application/json',
-            Authorization: `token ${token}`
+            Authorization: `token ${req.query.token}`
          },
          
          milestone: '*',
@@ -129,23 +113,48 @@ app.get('/login', (req, resp) => {
    })
 
    app.get('/tasks',(req,res)=>{
+
+      let token=""
+
+      request.post({
+         url: 'https://www.googleapis.com/oauth2/v4/token',
+         form:{
+         code: googleCode,
+         client_id: GOOGLE_CLIENT_ID,
+         client_secret: GOOGLE_CLIENT_SECRET,
+         redirect_uri: 'http://localhost:8082/user/login',
+         grant_type: "authorization_code"
+         }
+      }, (err, resp, body) => {
+         token = JSON.parse(body).access_token
+      })
+
+
       let issue=issuesArr[req.query.nome]
       console.log(req.query.nome)
       console.log(issue.body)
       console.log(issue.author)
       request.get( {
-         url:`https://www.googleapis.com/tasks/v1/users/${userToAuthenticate}/lists/myList`,
-         Authorization:token
+         url:`https://www.googleapis.com/tasks/v1/users/@me/lists/1`,
+         Authorization:`Bearer ${token}`
    },(err,response,body)=>{
-         console.log('pipip parou')
-         if(body=='Not Found'){
+         console.log('breakpoint1')
+         
             request.post({
-               url:`https://www.googleapis.com/tasks/v1/users/${userToAuthenticate}/lists/myList`,
-               Authorization:token
-         },(err,response,body)=>{
-               console.log('pipi parou2x')
+               url:`https://www.googleapis.com/tasks/v1/users/@me/lists`,
+               Authorization:`Bearer ${token}`,
+               form: {
+                  "kind": "tasks#taskList",
+                  "id": "1",
+                  "etag": "tag",
+                  "title": req.query.nome,
+                  "updated": new Date(),
+                  "selfLink": "localhost:8082/tasks/1"
+               }
+         },(err,resp,body)=>{
+               console.log('breakpoint 2')
             })
-         }
+         
       })
 
    })
