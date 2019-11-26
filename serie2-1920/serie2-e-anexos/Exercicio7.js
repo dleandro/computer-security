@@ -13,7 +13,7 @@ GOOGLE_CLIENT_ID='24443093752-l4m9is96jp05qkq1r602tapfb5jq577n.apps.googleuserco
 GOOGLE_CLIENT_SECRET = '2LCS4rLIWGQTdtwCYbSmTfLi',
 GITHUB_CLIENT_ID = '8c58a9745405de014b66',
 GITHUB_CLIENT_SECRET = '57abb1941df3de65119a86df620288f69db2e921',
-userToAuthenticate = 'dleandro'
+userToAuthenticate = 'A44857'
 let form=`<html><body><form action="/tasks" method="get">Issues title:<br><input type="text" name="nome" value=""><input type="submit"></form></body></html>`
 let googleCode = ""
 
@@ -129,6 +129,18 @@ app.get('/tasks', (req,res) => {
 function getUserTaskLists(req, res, token) {
 
    let createdTaskListId
+/*
+   request.get({ 
+      headers: {
+      'user-agent': 'node.js',
+      'Content-Type': 'application/json',
+      Authorization:` Bearer ${token}`
+   },
+   url:`https://www.googleapis.com/tasks/v1/users/@me/lists/`
+   
+},(err, response, body) => {
+   console.log('para aqui')
+})*/
    
    request.get({
       headers: {
@@ -140,7 +152,7 @@ function getUserTaskLists(req, res, token) {
       
    },(err, response, body) => {
       
-      if (body.toString().includes('Invalid task list ID')) {
+      if (JSON.parse(response.body).error.message == "Task list not found.") {
        
          request.post({
             url:`https://www.googleapis.com/tasks/v1/users/@me/lists`,
@@ -149,49 +161,68 @@ function getUserTaskLists(req, res, token) {
                'Content-Type': 'application/json',
                Authorization:` Bearer ${token}`
             },
-               kind: "tasks#taskList",
-               id: "1",
+             body:{ 
+             kind: "tasks#taskList",
                etag: "tag",
                title: req.query.nome,
                updated: new Date(),
                selfLink: "localhost:8082/tasks/1"
+             },
+             json:true
          },(err, resp, body)=>{
-            createdTaskListId = JSON.parse(body).id
+            createdTaskListId = body.id
             console.log(body.toString())
-         })
-      }  
+      
+        
          request.post({
+            url:`https://www.googleapis.com/tasks/v1/lists/${createdTaskListId}/tasks`,
             headers: {
                'user-agent': 'node.js',
                'Content-Type': 'application/json',
                Authorization:` Bearer ${token}`
             },
+            body:{
                kind: "tasks#task",
                id: "1",
-               etag: "etag",
+               etag: "tag",
                title: "teste",
                updated: new Date(),
                selfLink: "localhost:8082/tasks/1",
-               parent: "tasks/1",
+               parent:"1",
                position: "1",
-               notes: "",
+               notes: "this is a test",
                status: "completed",
                completed: new Date(),
-               deleted: "false",
+               deleted: "False",
                hidden: "false",
-               links: [
-                  {
-                     "type": "string",
-                     "description": "string",
-                     "link": "string"
-                  }
-               ],
+              links:""
+            },
+            json:true
                
-            url: `https://www.googleapis.com/tasks/v1/lists/${createdTaskListId}/tasks`
+         
          }, (err, resp, body) => {
             res.send(body)
+            let createdTaskId = body.id
+            getTaskListTitle(createdTaskListId,createdTaskId,token)
          })
    })
+
+   }
+})
+}
+
+function getTaskListTitle(taskListId,taskId,access_token){
+   request.get({
+      headers: {
+         'user-agent': 'node.js',
+         'Content-Type': 'application/json',
+         Authorization:` Bearer ${access_token}`
+      },
+      url:`https://www.googleapis.com/tasks/v1/lists/${taskListId}/tasks/${taskId}`
+   }, (err, resp, body) => {
+         console.log(JSON.parse(body).title)
+   })
+      
 }
 
 function listUserRepos(token, res) {
