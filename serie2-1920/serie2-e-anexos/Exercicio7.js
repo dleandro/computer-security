@@ -6,7 +6,9 @@ const PORT=8082;
 const request=require('request')
 const url = require('url')
 const flatMap = require('array.prototype.flatmap')
-let issuesArr=[]
+let issuesArr={}
+
+const secretState="thisisasecretcode"
 
 const 
 GOOGLE_CLIENT_ID='24443093752-l4m9is96jp05qkq1r602tapfb5jq577n.apps.googleusercontent.com',
@@ -31,7 +33,7 @@ app.get('/login', (req, resp) => {
       + 'nonce=cewhcj&' 
       
       // parameter state should bind the user's session to a request/response
-      + `state=${userToAuthenticate}&`
+      + `state=${secretState}&`
       
       // response_type for "authorization code grant"
       + 'response_type=code&'
@@ -45,27 +47,38 @@ app.get('/login', (req, resp) => {
    })
    
    app.get('/user/login', (req, res) => {
+      if(!req.query.state===secretState){
+         res.write("Aborting Process...Third Party Request")
+         res.end()
+         return
+      }
       googleCode = req.query.code
-      
+
       res.redirect(302, url.format({
          protocol: 'https', 
          hostname: 'github.com', 
          pathname: 'login/oauth/authorize', 
          query: { 
             client_id: GITHUB_CLIENT_ID, 
-            login: req.query.state,
-            scope: 'repo'
+            login: userToAuthenticate,
+            scope: 'repo',
+            state:secretState
          } 
       }))
    })
    
    app.get('/user/login/granted', (req, res) => {
       
+      if(!req.query.state===secretState){
+         res.write("Aborting Process...Third Party Request")
+         res.end()
+         return
+      }
       request.post({
          url: 'https://github.com/login/oauth/access_token',
          form: {
             headers: {
-               'Content-Type': 'application/json'
+               'Content-Type': ' application/json; charset=utf-8'
             },
             client_id: GITHUB_CLIENT_ID,
             client_secret: GITHUB_CLIENT_SECRET,
@@ -80,13 +93,13 @@ app.get('/login', (req, resp) => {
       request.get({
          headers: {
             'user-agent': 'node.js',
-            'Content-Type': 'application/json',
+            'Content-Type': ' application/json; charset=utf-8',
             Authorization: `token ${req.query.token}`
          },
-         url: `https://api.github.com/repos/${userToAuthenticate}/${req.param('repo')}/issues`
+         url: `https://api.github.com/repos/${userToAuthenticate}/${req.params.repo}/issues`
       }, (err, resp, body) => {
          let jsonObj = JSON.parse(body)
-         res.setHeader('content-type', 'text/html')
+         res.setHeader('content-type', 'text/html; charset=utf-8')
          if (jsonObj.message == undefined) {
             jsonObj.forEach(element =>{ res.write("<p>Title: " + element.title + ', Body: ' + element.body + ', creator: ' +element.user.login + "<\p>")
             issuesArr[element.title]={
@@ -129,30 +142,6 @@ app.get('/tasks', (req,res) => {
 function getUserTaskLists(req, res, token) {
 
    let createdTaskListId
-/*
-   request.get({ 
-      headers: {
-      'user-agent': 'node.js',
-      'Content-Type': 'application/json',
-      Authorization:` Bearer ${token}`
-   },
-   url:`https://www.googleapis.com/tasks/v1/users/@me/lists/`
-   
-},(err, response, body) => {
-   console.log('para aqui')
-})*/
-   
-   request.get({
-      headers: {
-         'user-agent': 'node.js',
-         'Content-Type': 'application/json',
-         Authorization:` Bearer ${token}`
-      },
-      url:`https://www.googleapis.com/tasks/v1/users/@me/lists/a2VCS2JvQWhWNDlRS2p3WQ`
-      
-   },(err, response, body) => {
-      
-      if (JSON.parse(response.body).error.message == "Task list not found.") {
        
          request.post({
             url:`https://www.googleapis.com/tasks/v1/users/@me/lists`,
@@ -164,52 +153,59 @@ function getUserTaskLists(req, res, token) {
              body:{ 
              kind: "tasks#taskList",
                etag: "tag",
-               title: req.query.nome,
+               title: "TaskList",
                updated: new Date(),
                selfLink: "localhost:8082/tasks/1"
              },
              json:true
          },(err, resp, body)=>{
             createdTaskListId = body.id
-            console.log(body.toString())
-      
-        
-         request.post({
-            url:`https://www.googleapis.com/tasks/v1/lists/${createdTaskListId}/tasks`,
-            headers: {
-               'user-agent': 'node.js',
-               'Content-Type': 'application/json',
-               Authorization:` Bearer ${token}`
-            },
-            body:{
-               kind: "tasks#task",
-               id: "1",
-               etag: "tag",
-               title: "teste",
-               updated: new Date(),
-               selfLink: "localhost:8082/tasks/1",
-               parent:"1",
-               position: "1",
-               notes: "this is a test",
-               status: "completed",
-               completed: new Date(),
-               deleted: "False",
-               hidden: "false",
-              links:""
-            },
-            json:true
+            console.log(createdTaskListId)
+            let titleArr=req.query.nome.split(',')
+               request.post({
+                  url:`https://www.googleapis.com/tasks/v1/lists/${createdTaskListId}/tasks`,
+                  headers: {
+                     'user-agent': 'node.js',
+                     'Content-Type': 'application/json',
+                     Authorization:` Bearer ${token}`
+                  },
+                  body:{
+                     kind: "tasks#task",
+                     id: "1",
+                     etag: "tag",
+                     title: req.query.nome,
+                     updated: new Date(),
+                     selfLink: "localhost:8082/tasks/1",
+                     parent:"1",
+                     position: "1",
+                     notes: issuesArr[req.query.nome].body,
+                     status: "needsAction",
+                     completed: new Date(),
+                     deleted: "False",
+                     hidden: "false",
+                    links:""
+                  },
+                  json:true
+                     
                
-         
-         }, (err, resp, body) => {
-            res.send(body)
-            let createdTaskId = body.id
-            getTaskListTitle(createdTaskListId,createdTaskId,token)
-         })
-   })
+               }, (err, resp, body) => {
+                  let task={
+                     id:body.id,
+                     title:body.title,
+                     description:body.notes,
+                     author:issuesArr[req.query.nome].author
+                  }
+                  res.send(task)
+                  let createdTaskId = body.id
+                  getTaskListTitle(createdTaskListId,createdTaskId,token)
+               })
+      
+            })
 
-   }
-})
-}
+         }
+
+
+      
 
 function getTaskListTitle(taskListId,taskId,access_token){
    request.get({
